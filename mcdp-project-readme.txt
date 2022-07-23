@@ -9,10 +9,26 @@ show dbs
 use logistics
 
 
+#Use this script to create a cities collection.
+#Use this collection to run unit test cases. This is also good for simulation.
+#Unit tests are run from the python file itself. Run unit_tests.py
+#Aggregation Script City
+
+minsize = {$match:{population:{$gt:500000}}}
+sortbysize = { $sort : { population: -1 }}
+onepercountry = { $group : { _id: "$country", city : { $first : "$$ROOT" }}}
+format = { $project : { _id: "$city.city_ascii", position:["$city.lng","$city.lat"] , country: "$city.country" }}
+newcollection = { $out : "cities" }
+db.worldcities.aggregate([minsize,sortbysize,onepercountry,format,newcollection])
+
+
+
+
 #This script is a part of task 3
 #This script is used to create a collection "cities". cities collection include the 15 largest cities in every country (of fewer if there are less than 15).
 #This script should not be used to run simulation. Because, this contains some cities which have special characters like ("/") in their name, because of which API URI fails. 
 #Also, this script updates the city name with pattern "city-country". This is because, there are multiple records which have the same city name but different country like "George Town"
+#Given Python unit test cases will not work with this script. Because there is change in name of cities.
 
 # Aggregation Script City
 
@@ -26,11 +42,14 @@ outCities = { $out : "cities" }
 db.worldcities.aggregate([matchByMinPopulation,sortByPopulation,groupByCountry,projectForSlicing,unwindCity,projectCity,outCities])
 
 
+
+
 #This script is a part of task 3
 #This script is used to create a collection "cities". cities collection includes the 15 largest cities in every country (of fewer if there are less than 15).
 #This script is modified version of the above script. This script removes the special characters like ("/") from the city names.
 #Also, this script updates the city name with pattern "city-country". This is because, there are multiple records which have the same city name but different country like "George Town"
 #This script can be used to run simulation. Because, this contains some cities which have special characters like ("/") in their name, because of which API URI fails.
+#Given Python unit test cases will not work with this script. Because there is change in name of cities.
 
 # Aggregation Script City
 
@@ -47,6 +66,8 @@ outCities = { $out : "cities" }
 db.worldcities.aggregate([matchByMinPopulation,sortByPopulation,groupByCountry,projectForSlicing,unwindCity,addFieldsCityCharArray,addFieldsFilteredCityCharArray,addFieldsFilteredCityString,projectCity,outCities])
 
 
+
+
 #This script is used to create a collection "planes"
 #This script can be used to run simulation. Update the size value as per number planes requirement.
 
@@ -60,11 +81,15 @@ asplanes = { $out: "planes"}
 db.cities.aggregate([firstN,addidone,unwind,format,asplanes])
 
 
+
+
 #This script is required to create indexes on the specific collections.
 #2dsphere index is mandatory to run simulation
 
 db.cities.createIndex( { "position" : "2dsphere" } )
 db.cargos.createIndex( { "location" : 1, "status":1 } )
+
+
 
 
 #Task 3 - To record plane travel history, miles travel time taken.
@@ -73,5 +98,3 @@ To access the plane travel history, an additional API is also created - GET "/pl
 This also handles the length of plane history. If plane history goes more than 40 count, then it will migrate the oldest 20 records to new collection.
 A new collection "planes_travel_archives" is also created, to store the oldest plane travel history.
 
-
-Unit tests are run from the python file itself. Run unit_tests.py
