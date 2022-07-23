@@ -93,8 +93,32 @@ db.cargos.createIndex( { "location" : 1, "status":1 } )
 
 
 #Task 3 - To record plane travel history, miles travel time taken.
-This code has been done as Java class PlaneRecordService.java, which is called on separate thread on plane landed.
+PlaneTravelHistoryService.java = This includes the code to add the plane travel history on landing
+PlaneTravelHistoryService.java = This is a scheduled job, running every 5 min, to move oldest travel history to archive, created collection "planes_travel_archives"
+	This also handles the movement with client sessions and transaction.
+This code has been done as Java class PlaneTravelHistoryService.java, which is called on separate thread on plane landed.
 To access the plane travel history, an additional API is also created - GET "/planes/history/:id"
 This also handles the length of plane history. If plane history goes more than 40 count, then it will migrate the oldest 20 records to new collection.
 A new collection "planes_travel_archives" is also created, to store the oldest plane travel history.
 
+
+
+
+Functionalities completed:
+
+Note : Please read the descriptions given in text file - mcdp-project-readme.txt
+
+Task 1
+	1. Data insertion scripts for collections - worldcities, cities, planes, cargos, planes_travel_archives
+
+Task 2
+	1. All APIs as per the document.
+	2. Unit tests to be run using Python script unit_tests.py
+	3. Test harness to be run using Python script testharness.py
+	4. UI code included with /static folder in project context.
+	For more details read mcdp-project-readme.txt
+
+Task 3
+	1. Script to include 15 major cities from every country. Please check the description for scripts.
+	2. Update for plane travel history, includes - collection (planes, planes_travel_archives), code update, extended api for plane history.
+	For more details read mcdp-project-readme.txt
