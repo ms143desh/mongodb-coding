@@ -1,3 +1,4 @@
+#Application is running on port 5001
 
 # Load sample data - run following commands in sequence. Check for the description given for each command.
 

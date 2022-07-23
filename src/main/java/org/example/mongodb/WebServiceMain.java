@@ -43,7 +43,9 @@ public class WebServiceMain {
 	}
 
 	public static void main(String[] args) {
-		port(5001);
+		
+		port(5000);
+		
 		String staticDir = System.getProperty("user.dir").concat("/static");
 		//staticDir = staticDir.substring(0,ordinalIndexOf(staticDir,"/",2)) + "/static";
 		externalStaticFileLocation(staticDir);

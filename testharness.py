@@ -12,7 +12,7 @@ city_locations = {}
 
 #This is also in unit_tests
 
-url = "http://localhost:5001"
+url = "http://localhost:5000"
 delivered_count = 0
 
 def run_unit_tests():
