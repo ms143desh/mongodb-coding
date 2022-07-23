@@ -11,6 +11,10 @@ import static spark.Spark.port;
 import static spark.Spark.post;
 import static spark.Spark.put;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.LogManager;
 
 import org.bson.codecs.configuration.CodecRegistries;
@@ -148,8 +152,11 @@ public class WebServiceMain {
 				put("/cargo/:id/location/:location",(req,res) -> apiRoutesService.cargoMove(req,res));
 
 				
-				get("/planes/history/:id",(req,res) -> apiRoutesService.getPlanesHistoryRecords(req,res));
 				
+				//Schedule & API for Plane travel history and archives
+				apiRoutesService.schedulePlaneTravelArchives();
+				
+				get("/planes/history/:id",(req,res) -> apiRoutesService.getPlanesHistoryRecords(req,res));
 				
 			after((req, res) -> {
 				res.type("application/json");
