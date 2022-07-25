@@ -1,7 +1,5 @@
 package org.example.mongodb.codec;
 
-import java.util.List;
-
 import org.bson.Document;
 import org.example.mongodb.model.City;
 
@@ -19,7 +17,7 @@ public class CityConverter {
     public City convert(Document document) {
     	City city = new City();
     	city.setName(document.getString("_id"));
-    	city.setLocation(document.get("position", List.class));
+    	city.setLocation(document.getList("position", Double.class));
     	city.setCountry(document.getString("country"));
 
         return city;

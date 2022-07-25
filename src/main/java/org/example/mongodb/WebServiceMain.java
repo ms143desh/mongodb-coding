@@ -43,7 +43,9 @@ public class WebServiceMain {
 	}
 
 	public static void main(String[] args) {
+		
 		port(5001);
+		
 		String staticDir = System.getProperty("user.dir").concat("/static");
 		//staticDir = staticDir.substring(0,ordinalIndexOf(staticDir,"/",2)) + "/static";
 		externalStaticFileLocation(staticDir);
@@ -146,8 +148,11 @@ public class WebServiceMain {
 				put("/cargo/:id/location/:location",(req,res) -> apiRoutesService.cargoMove(req,res));
 
 				
-				get("/planes/history/:id",(req,res) -> apiRoutesService.getPlanesHistoryRecords(req,res));
 				
+				//Schedule & API for Plane travel history and archives
+				apiRoutesService.schedulePlaneTravelArchives();
+				
+				get("/planes/history/:id",(req,res) -> apiRoutesService.getPlanesHistoryRecords(req,res));
 				
 			after((req, res) -> {
 				res.type("application/json");

@@ -1,3 +1,4 @@
+#Application is running on port 5001
 
 # Load sample data - run following commands in sequence. Check for the description given for each command.
 
@@ -8,10 +9,26 @@ show dbs
 use logistics
 
 
+#Use this script to create a cities collection.
+#Use this collection to run unit test cases. This is also good for simulation.
+#Unit tests are run from the python file itself. Run unit_tests.py
+#Aggregation Script City
+
+minsize = {$match:{population:{$gt:500000}}}
+sortbysize = { $sort : { population: -1 }}
+onepercountry = { $group : { _id: "$country", city : { $first : "$$ROOT" }}}
+format = { $project : { _id: "$city.city_ascii", position:["$city.lng","$city.lat"] , country: "$city.country" }}
+newcollection = { $out : "cities" }
+db.worldcities.aggregate([minsize,sortbysize,onepercountry,format,newcollection])
+
+
+
+
 #This script is a part of task 3
 #This script is used to create a collection "cities". cities collection include the 15 largest cities in every country (of fewer if there are less than 15).
 #This script should not be used to run simulation. Because, this contains some cities which have special characters like ("/") in their name, because of which API URI fails. 
 #Also, this script updates the city name with pattern "city-country". This is because, there are multiple records which have the same city name but different country like "George Town"
+#Given Python unit test cases will not work with this script. Because there is change in name of cities.
 
 # Aggregation Script City
 
@@ -25,11 +42,14 @@ outCities = { $out : "cities" }
 db.worldcities.aggregate([matchByMinPopulation,sortByPopulation,groupByCountry,projectForSlicing,unwindCity,projectCity,outCities])
 
 
+
+
 #This script is a part of task 3
 #This script is used to create a collection "cities". cities collection includes the 15 largest cities in every country (of fewer if there are less than 15).
 #This script is modified version of the above script. This script removes the special characters like ("/") from the city names.
 #Also, this script updates the city name with pattern "city-country". This is because, there are multiple records which have the same city name but different country like "George Town"
 #This script can be used to run simulation. Because, this contains some cities which have special characters like ("/") in their name, because of which API URI fails.
+#Given Python unit test cases will not work with this script. Because there is change in name of cities.
 
 # Aggregation Script City
 
@@ -46,6 +66,8 @@ outCities = { $out : "cities" }
 db.worldcities.aggregate([matchByMinPopulation,sortByPopulation,groupByCountry,projectForSlicing,unwindCity,addFieldsCityCharArray,addFieldsFilteredCityCharArray,addFieldsFilteredCityString,projectCity,outCities])
 
 
+
+
 #This script is used to create a collection "planes"
 #This script can be used to run simulation. Update the size value as per number planes requirement.
 
@@ -59,6 +81,8 @@ asplanes = { $out: "planes"}
 db.cities.aggregate([firstN,addidone,unwind,format,asplanes])
 
 
+
+
 #This script is required to create indexes on the specific collections.
 #2dsphere index is mandatory to run simulation
 
@@ -66,11 +90,41 @@ db.cities.createIndex( { "position" : "2dsphere" } )
 db.cargos.createIndex( { "location" : 1, "status":1 } )
 
 
+
+
 #Task 3 - To record plane travel history, miles travel time taken.
-This code has been done as Java class PlaneRecordService.java, which is called on separate thread on plane landed.
+PlaneTravelHistoryService.java = This includes the code to add the plane travel history on landing
+PlaneTravelHistoryService.java = This is a scheduled job, running every 5 min, to move oldest travel history to archive, created collection "planes_travel_archives"
+	This also handles the movement with client sessions and transaction.
+This code has been done as Java class PlaneTravelHistoryService.java, which is called on separate thread on plane landed.
 To access the plane travel history, an additional API is also created - GET "/planes/history/:id"
 This also handles the length of plane history. If plane history goes more than 40 count, then it will migrate the oldest 20 records to new collection.
 A new collection "planes_travel_archives" is also created, to store the oldest plane travel history.
 
 
-Unit tests are run from the python file itself. Run unit_tests.py
+
+
+Functionalities completed:
+
+Note : Please read the descriptions given in text file - mcdp-project-readme.txt
+
+Task 1
+	1. Data insertion scripts for collections - worldcities, cities, planes, cargos, planes_travel_archives
+
+Task 2
+	1. All APIs as per the document. Running on port 5001.
+	2. Unit tests to be run using Python script unit_tests.py
+	3. Test harness to be run using Python script testharness.py
+	4. UI code included with /static folder in project context.
+	For more details read mcdp-project-readme.txt
+
+Task 3
+	1. Script to include 15 major cities from every country. Please check the description for scripts.
+	2. Update for plane travel history, includes - collection (planes, planes_travel_archives), code update, extended api for plane history.
+	Note: For more details read mcdp-project-readme.txt
+
+Components:
+	1. Data scripts - Scripts mentioned in file mcdp-project.readme.txt (Running on port 5001)
+	2. Application server - Code written in Java
+	3. Javascript GUI - /static folder in project context
+	4. Testharness - Python script (Running on port 5001)

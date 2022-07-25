@@ -6,11 +6,8 @@ import static org.example.mongodb.service.Constants.FIELD_LANDED;
 import static org.example.mongodb.service.Constants.FIELD_ROUTE;
 import static org.example.mongodb.service.Constants.FIELD_UNDERSCORE_ID;
 
-import java.util.List;
-
 import org.bson.Document;
 import org.example.mongodb.model.Plane;
-import org.example.mongodb.model.PlaneRecord;
 
 public class PlaneConverter {
 

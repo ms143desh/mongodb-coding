@@ -17,12 +17,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.example.mongodb.exceptions.MCDPProjectException;
 import org.example.mongodb.model.Cargo;
 import org.example.mongodb.model.City;
 import org.example.mongodb.model.NeighborCities;
 import org.example.mongodb.model.Plane;
+import org.example.mongodb.travelhistory.service.PlaneTravelArchiveService;
+import org.example.mongodb.travelhistory.service.PlaneTravelHistoryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +45,8 @@ public class APIRoutesService {
 	
 	private ValidationService validationService;
 	private DatabaseService databaseService;
-	private PlaneRecordService planeRecordService;
+	private PlaneTravelHistoryService planeTravelHistoryService;
+	private PlaneTravelArchiveService planeTravelArchiveService;
 	private ExecutorService executorService = Executors.newFixedThreadPool(10);
 	
 	private static final Logger logger = LoggerFactory.getLogger(APIRoutesService.class);
@@ -49,7 +54,8 @@ public class APIRoutesService {
 	public APIRoutesService(MongoClient mongoClient) {
 		validationService = new ValidationService();
 		databaseService = new DatabaseService(mongoClient);
-		planeRecordService = new PlaneRecordService(mongoClient);
+		planeTravelHistoryService = new PlaneTravelHistoryService(mongoClient);
+		planeTravelArchiveService = new PlaneTravelArchiveService(mongoClient);
 	}
 	
 	private void logAPICall(String requestUri)
@@ -125,7 +131,7 @@ public class APIRoutesService {
 		{
 			String lastLanded = planeLastLanded;
 			executorService.execute(() -> {
-		    	planeRecordService.updatePlaneTravelRecord(planeId, lastLanded, landed);
+		    	planeTravelHistoryService.updatePlaneTravelHistory(planeId, lastLanded, landed);
 			});
 		}
 		
@@ -300,6 +306,18 @@ public class APIRoutesService {
 		UpdateResult updateResult = databaseService.updateCargoDocument(cargoId, null, null, location);
 		validationService.validateUpdateResult(cargoId, updateResult, req, res);
 		return gson.toJson(databaseService.getCargoDocumentById(cargoId));
+	}
+	
+	public void schedulePlaneTravelArchives()
+	{
+		int initialStartDelay = 5;
+		int scheduleDelay = 5;
+		ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
+        Runnable runnablePlaneTravelArchiveTask = () -> {
+        	planeTravelArchiveService.updatePlaneTravelArchives();
+        };
+
+        scheduledExecutorService.scheduleAtFixedRate(runnablePlaneTravelArchiveTask, initialStartDelay, scheduleDelay, TimeUnit.MINUTES);
 	}
 	
 	public String getPlanesHistoryRecords(Request req, Response res)

@@ -46,7 +46,7 @@ public class DatabaseService {
 		this.mongoClient = mongoClient;
 	}
 	
-	protected MongoCollection<Document> getGenericCollection(String databaseName, String collectionName)
+	public MongoCollection<Document> getGenericCollection(String databaseName, String collectionName)
 	{
 		return mongoClient.getDatabase(databaseName).getCollection(collectionName);
 	}
