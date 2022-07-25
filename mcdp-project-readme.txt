@@ -112,7 +112,7 @@ Task 1
 	1. Data insertion scripts for collections - worldcities, cities, planes, cargos, planes_travel_archives
 
 Task 2
-	1. All APIs as per the document.
+	1. All APIs as per the document. Running on port 5001.
 	2. Unit tests to be run using Python script unit_tests.py
 	3. Test harness to be run using Python script testharness.py
 	4. UI code included with /static folder in project context.
@@ -121,4 +121,10 @@ Task 2
 Task 3
 	1. Script to include 15 major cities from every country. Please check the description for scripts.
 	2. Update for plane travel history, includes - collection (planes, planes_travel_archives), code update, extended api for plane history.
-	For more details read mcdp-project-readme.txt
+	Note: For more details read mcdp-project-readme.txt
+
+Components:
+	1. Data scripts - Scripts mentioned in file mcdp-project.readme.txt (Running on port 5001)
+	2. Application server - Code written in Java
+	3. Javascript GUI - /static folder in project context
+	4. Testharness - Python script (Running on port 5001)

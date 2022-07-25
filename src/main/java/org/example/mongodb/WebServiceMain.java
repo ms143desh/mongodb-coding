@@ -11,10 +11,6 @@ import static spark.Spark.port;
 import static spark.Spark.post;
 import static spark.Spark.put;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.LogManager;
 
 import org.bson.codecs.configuration.CodecRegistries;
@@ -48,7 +44,7 @@ public class WebServiceMain {
 
 	public static void main(String[] args) {
 		
-		port(5000);
+		port(5001);
 		
 		String staticDir = System.getProperty("user.dir").concat("/static");
 		//staticDir = staticDir.substring(0,ordinalIndexOf(staticDir,"/",2)) + "/static";
