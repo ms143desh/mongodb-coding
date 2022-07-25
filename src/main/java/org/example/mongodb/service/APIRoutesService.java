@@ -21,12 +21,12 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.example.mongodb.exceptions.MCDPProjectException;
+import org.example.mongodb.executor.service.PlaneTravelArchiveService;
+import org.example.mongodb.executor.service.PlaneTravelHistoryService;
 import org.example.mongodb.model.Cargo;
 import org.example.mongodb.model.City;
 import org.example.mongodb.model.NeighborCities;
 import org.example.mongodb.model.Plane;
-import org.example.mongodb.travelhistory.service.PlaneTravelArchiveService;
-import org.example.mongodb.travelhistory.service.PlaneTravelHistoryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

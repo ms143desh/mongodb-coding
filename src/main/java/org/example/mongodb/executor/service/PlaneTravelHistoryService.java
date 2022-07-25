@@ -1,4 +1,4 @@
-package org.example.mongodb.travelhistory.service;
+package org.example.mongodb.executor.service;
 
 import static org.example.mongodb.service.Constants.COLL_CITIES;
 import static org.example.mongodb.service.Constants.COLL_PLANES;
