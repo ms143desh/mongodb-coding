@@ -1,19 +1,31 @@
 package org.example.mongodb.service;
 
+import static com.mongodb.client.model.Projections.computed;
+import static com.mongodb.client.model.Projections.excludeId;
+import static com.mongodb.client.model.Projections.fields;
+import static com.mongodb.client.model.Projections.include;
 import static org.example.mongodb.service.Constants.COLL_CARGOS;
 import static org.example.mongodb.service.Constants.COLL_CITIES;
 import static org.example.mongodb.service.Constants.COLL_PLANES;
 import static org.example.mongodb.service.Constants.DB_LOGISTICS;
+import static org.example.mongodb.service.Constants.FIELD_CALL_SIGN;
+import static org.example.mongodb.service.Constants.FIELD_COUNTRY;
 import static org.example.mongodb.service.Constants.FIELD_COURIER;
 import static org.example.mongodb.service.Constants.FIELD_CURRENT_LOCATION;
+import static org.example.mongodb.service.Constants.FIELD_FIRST_ROUTE;
 import static org.example.mongodb.service.Constants.FIELD_HEADING;
 import static org.example.mongodb.service.Constants.FIELD_LANDED;
 import static org.example.mongodb.service.Constants.FIELD_LOCATION;
+import static org.example.mongodb.service.Constants.FIELD_MAINTENANCE_REQUIRE;
+import static org.example.mongodb.service.Constants.FIELD_NAME;
+import static org.example.mongodb.service.Constants.FIELD_PLANE_TRAVEL_HISTORY;
 import static org.example.mongodb.service.Constants.FIELD_RECEIVED;
 import static org.example.mongodb.service.Constants.FIELD_ROUTE;
 import static org.example.mongodb.service.Constants.FIELD_STATUS;
+import static org.example.mongodb.service.Constants.FIELD_TOTAL_DISTANCE_TRAVEL;
+import static org.example.mongodb.service.Constants.FIELD_TOTAL_TRAVEL_TIME;
 import static org.example.mongodb.service.Constants.FIELD_UNDERSCORE_ID;
-import static org.example.mongodb.service.Constants.*;
+import static org.example.mongodb.service.Constants.IN_PROCESS;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,17 +36,12 @@ import org.bson.BsonArray;
 import org.bson.BsonString;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.example.mongodb.model.Cargo;
-import org.example.mongodb.model.City;
-import org.example.mongodb.model.Plane;
-import org.example.mongodb.model.PlaneRecord;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
 
@@ -51,30 +58,15 @@ public class DatabaseService {
 		return mongoClient.getDatabase(databaseName).getCollection(collectionName);
 	}
 	
-	private MongoCollection<Plane> getPlaneCollection()
-	{
-		return mongoClient.getDatabase(DB_LOGISTICS).getCollection(COLL_PLANES, Plane.class);
-	}
+	private static final Bson PLANE_DEFAULT_PROJECTION = fields(include(FIELD_CALL_SIGN, FIELD_CURRENT_LOCATION, FIELD_HEADING, FIELD_ROUTE, FIELD_LANDED), excludeId());
+	private static final Bson CITY_DEFAULT_PROJECTION = fields(include(FIELD_NAME, FIELD_LOCATION, FIELD_COUNTRY), excludeId());
+	private static final Bson PLANE_RECORD_DEFAULT_PROJECTION = fields(include(FIELD_CALL_SIGN, FIELD_CURRENT_LOCATION, FIELD_HEADING, FIELD_ROUTE, 
+			FIELD_LANDED, FIELD_TOTAL_TRAVEL_TIME, FIELD_TOTAL_DISTANCE_TRAVEL, FIELD_MAINTENANCE_REQUIRE, FIELD_PLANE_TRAVEL_HISTORY), excludeId());
 	
-	private MongoCollection<City> getCityCollection()
+	protected List<Document> getAllPlanesDocument()
 	{
-		return mongoClient.getDatabase(DB_LOGISTICS).getCollection(COLL_CITIES, City.class);
-	}
-	
-	private MongoCollection<Cargo> getCargoCollection()
-	{
-		return mongoClient.getDatabase(DB_LOGISTICS).getCollection(COLL_CARGOS, Cargo.class);
-	}
-	
-	private MongoCollection<PlaneRecord> getPlaneRecordCollection()
-	{
-		return mongoClient.getDatabase(DB_LOGISTICS).getCollection(COLL_PLANES, PlaneRecord.class);
-	}
-	
-	protected List<Plane> getAllPlanesDocument()
-	{
-		List<Plane> planesList = new ArrayList<>();
-		MongoCursor<Plane> planesCursor = getPlaneCollection().find().iterator();
+		List<Document> planesList = new ArrayList<>();
+		MongoCursor<Document> planesCursor = getGenericCollection(DB_LOGISTICS, COLL_PLANES).find().projection(PLANE_DEFAULT_PROJECTION).iterator();
 		
 		while(planesCursor.hasNext())
 		{
@@ -84,13 +76,13 @@ public class DatabaseService {
 	    return planesList;
 	}
 	
-	protected Plane getPlaneDocumentById(String planeId)
+	protected Document getPlaneDocumentById(String planeId)
 	{
-		Plane plane = null;
+		Document plane = null;
 		if(planeId != null)
 		{
 			Bson filter = Filters.eq(FIELD_UNDERSCORE_ID, planeId);
-			MongoCursor<Plane> planesCursor = getPlaneCollection().find(filter).iterator();
+			MongoCursor<Document> planesCursor = getGenericCollection(DB_LOGISTICS, COLL_PLANES).find(filter).projection(PLANE_DEFAULT_PROJECTION).iterator();
 			if(planesCursor.hasNext())
 			{
 				plane = planesCursor.next();
@@ -100,7 +92,7 @@ public class DatabaseService {
 		return plane;
 	}
 	
-	protected UpdateResult updatePlaneDocumentById(String planeId, List<Double> longLat, int heading, String landing)
+	protected UpdateResult updatePlaneDocumentById(String planeId, List<Double> longLat, float heading, String landing)
 	{
 		Bson filter = Filters.eq(FIELD_UNDERSCORE_ID, planeId);
 		Bson updates = null;
@@ -113,7 +105,7 @@ public class DatabaseService {
 			updates = Updates.combine(Updates.set(FIELD_CURRENT_LOCATION, longLat),Updates.set(FIELD_HEADING, heading));
 		}
                 
-		return getPlaneCollection().updateOne(filter, updates);
+		return getGenericCollection(DB_LOGISTICS, COLL_PLANES).updateOne(filter, updates);
 	}
 	
 	protected UpdateResult updatePlaneDocumentByIdRoute(String planeId, String cityStr, boolean replaceRoute)
@@ -132,24 +124,22 @@ public class DatabaseService {
 			updates = Updates.combine(Updates.addToSet(FIELD_ROUTE, cityStr));
 		}
                 
-		return getPlaneCollection().updateOne(filter, updates);
+		return getGenericCollection(DB_LOGISTICS, COLL_PLANES).updateOne(filter, updates);
 	}
 	
 	protected boolean validatePlaneFirstRouteAndLanded(String planeId)
 	{
 		boolean firstRouteLandedMatch = false;
 		Bson matchPlaneId = Aggregates.match(Filters.eq(FIELD_UNDERSCORE_ID, planeId));
-		Bson project = Aggregates.project(Projections.fields(Projections.excludeId(),
-				Projections.include(FIELD_LANDED),
-				Projections.computed("firstRoute", new Document("$arrayElemAt", Arrays.asList("$route", 0)))));
+		Bson project = Aggregates.project(fields(excludeId(),
+				include(FIELD_LANDED),
+				computed(FIELD_FIRST_ROUTE, new Document("$arrayElemAt", Arrays.asList("$route", 0)))));
 		
-		//Bson matchExpr = Aggregates.match(Filters.expr(Filters.eq("$firstRoute","$landed")));
-	    
 		MongoCursor<Document> documentAggregateCursor = getGenericCollection(DB_LOGISTICS, COLL_PLANES).aggregate(Arrays.asList(matchPlaneId, project)).cursor();
 		if(documentAggregateCursor.hasNext())
 		{
 			Document document = documentAggregateCursor.next();
-			if(document.getString("firstRoute").equals(document.getString(FIELD_LANDED)))
+			if(document.getString(FIELD_FIRST_ROUTE).equals(document.getString(FIELD_LANDED)))
 			{
 				firstRouteLandedMatch = true;
 			}
@@ -161,13 +151,13 @@ public class DatabaseService {
 	{
 		Bson filter = Filters.eq(FIELD_UNDERSCORE_ID, planeId);
 		Bson updates = Updates.combine(Updates.popFirst(FIELD_ROUTE));
-		return getPlaneCollection().updateOne(filter, updates);
+		return getGenericCollection(DB_LOGISTICS, COLL_PLANES).updateOne(filter, updates);
 	}
 	
-	protected List<City> getAllCitiesDocument()
+	protected List<Document> getAllCitiesDocument()
 	{
-		List<City> citiesList = new ArrayList<>();
-		MongoCursor<City> cityCursor = getCityCollection().find().iterator();
+		List<Document> citiesList = new ArrayList<>();
+		MongoCursor<Document> cityCursor = getGenericCollection(DB_LOGISTICS, COLL_CITIES).find().projection(CITY_DEFAULT_PROJECTION).iterator();
 		
 		while(cityCursor.hasNext())
 		{
@@ -177,13 +167,13 @@ public class DatabaseService {
 	    return citiesList;
 	}
 	
-	protected City getCityDocumentById(String cityId)
+	protected Document getCityDocumentById(String cityId)
 	{
-		City city = null;
+		Document city = null;
 		if(cityId != null)
 		{
 			Bson filter = Filters.eq(FIELD_UNDERSCORE_ID, cityId);
-			MongoCursor<City> cityCursor = getCityCollection().find(filter).iterator();
+			MongoCursor<Document> cityCursor = getGenericCollection(DB_LOGISTICS, COLL_CITIES).find(filter).projection(CITY_DEFAULT_PROJECTION).iterator();
 			if(cityCursor.hasNext())
 			{
 				city = cityCursor.next();
@@ -193,14 +183,14 @@ public class DatabaseService {
 		return city;
 	}
 	
-	protected List<City> getNearbyCityDocumentsForId(List<Double> location, int count)
+	protected List<Document> getNearbyCityDocumentsForId(List<Double> location, int count)
 	{
-		List<City> citiesList = new ArrayList<>();
+		List<Document> citiesList = new ArrayList<>();
 		Bson geometryFilter = Filters.eq("$geometry", Filters.and(Filters.eq("type", "Point"), Filters.eq("coordinates", location)));
 		Bson nearFilter = Filters.eq("$near", Filters.and(geometryFilter, Filters.eq("$minDistance", 0.10)));
-		Bson positionFilter = Filters.eq(FIELD_POSITION, nearFilter);
+		Bson positionFilter = Filters.eq(FIELD_LOCATION, nearFilter);
 		
-		MongoCursor<City> cityCursor = getCityCollection().find(positionFilter).limit(count).iterator();
+		MongoCursor<Document> cityCursor = getGenericCollection(DB_LOGISTICS, COLL_CITIES).find(positionFilter).projection(CITY_DEFAULT_PROJECTION).limit(count).iterator();
 		while(cityCursor.hasNext())
 		{
 			citiesList.add(cityCursor.next());
@@ -209,12 +199,12 @@ public class DatabaseService {
 	    return citiesList;
 	}
 	
-	protected List<City> getAllCitiesDocumentByIds(List<String> cityIds)
+	protected List<Document> getAllCitiesDocumentByIds(List<String> cityIds)
 	{
-		List<City> citiesList = new ArrayList<>();
+		List<Document> citiesList = new ArrayList<>();
 		Bson inFilter = Filters.in(FIELD_UNDERSCORE_ID, cityIds);
 		
-		MongoCursor<City> cityCursor = getCityCollection().find(inFilter).iterator();
+		MongoCursor<Document> cityCursor = getGenericCollection(DB_LOGISTICS, COLL_CITIES).find(inFilter).projection(CITY_DEFAULT_PROJECTION).iterator();
 		
 		while(cityCursor.hasNext())
 		{
@@ -224,18 +214,18 @@ public class DatabaseService {
 	    return citiesList;
 	}
 	
-	protected Cargo insertCargoDocument(Cargo cargo)
+	protected Document insertCargoDocument(Document cargo)
 	{
-		getCargoCollection().insertOne(cargo);
+		getGenericCollection(DB_LOGISTICS, COLL_CARGOS).insertOne(cargo);
 		return cargo;
 	}
 	
-	protected List<Cargo> getAllCargoDocumentAtLocationInProcess(String location)
+	protected List<Document> getAllCargoDocumentAtLocationInProcess(String location)
 	{
-		List<Cargo> cargosList = new ArrayList<>();
+		List<Document> cargosList = new ArrayList<>();
 		
 		Bson filter = Filters.and(Filters.eq(FIELD_LOCATION, location), Filters.eq(FIELD_STATUS, IN_PROCESS));
-		MongoCursor<Cargo> cargoCursor = getCargoCollection().find(filter).iterator();
+		MongoCursor<Document> cargoCursor = getGenericCollection(DB_LOGISTICS, COLL_CARGOS).find(filter).projection(excludeId()).iterator();
 		
 		while(cargoCursor.hasNext())
 		{
@@ -245,13 +235,13 @@ public class DatabaseService {
 	    return cargosList;
 	}
 	
-	protected Cargo getCargoDocumentById(String cargoId)
+	protected Document getCargoDocumentById(String cargoId)
 	{
-		Cargo cargo = null;
+		Document cargo = null;
 		if(cargoId != null)
 		{
 			Bson filter = Filters.eq(FIELD_UNDERSCORE_ID, cargoId);
-			MongoCursor<Cargo> cargoCursor = getCargoCollection().find(filter).iterator();
+			MongoCursor<Document> cargoCursor = getGenericCollection(DB_LOGISTICS, COLL_CARGOS).find(filter).projection(excludeId()).iterator();
 			if(cargoCursor.hasNext())
 			{
 				cargo = cargoCursor.next();
@@ -275,26 +265,19 @@ public class DatabaseService {
 		}
 		else
 		{
-			if(courier != null)
-			{
-				updates = Updates.combine(Updates.set(FIELD_COURIER, courier));
-			}
-			else
-			{
-				updates = Updates.combine(Updates.unset(FIELD_COURIER));
-			}
+			updates = Updates.combine(Updates.set(FIELD_COURIER, courier));
 		}
 		
-		return getCargoCollection().updateOne(filter, updates);
+		return getGenericCollection(DB_LOGISTICS, COLL_CARGOS).updateOne(filter, updates);
 	}
 	
-	protected PlaneRecord getPlaneHistoryRecordsDocumentById(String planeId)
+	protected Document getPlaneHistoryRecordsDocumentById(String planeId)
 	{
-		PlaneRecord planeRecord = null;
+		Document planeRecord = null;
 		if(planeId != null)
 		{
 			Bson filter = Filters.eq(FIELD_UNDERSCORE_ID, planeId);
-			MongoCursor<PlaneRecord> planesCursor = getPlaneRecordCollection().find(filter).iterator();
+			MongoCursor<Document> planesCursor = getGenericCollection(DB_LOGISTICS, COLL_PLANES).find(filter).projection(PLANE_RECORD_DEFAULT_PROJECTION).iterator();
 			if(planesCursor.hasNext())
 			{
 				planeRecord = planesCursor.next();

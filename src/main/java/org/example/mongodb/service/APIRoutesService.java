@@ -10,23 +10,26 @@ import static org.example.mongodb.service.Constants.COLON_LANDED;
 import static org.example.mongodb.service.Constants.COLON_LOCATION;
 import static org.example.mongodb.service.Constants.DELIVERED;
 import static org.example.mongodb.service.Constants.ERROR_CODE;
+import static org.example.mongodb.service.Constants.FIELD_DESTINATION;
+import static org.example.mongodb.service.Constants.FIELD_LANDED;
+import static org.example.mongodb.service.Constants.FIELD_LOCATION;
+import static org.example.mongodb.service.Constants.FIELD_STATUS;
 import static org.example.mongodb.service.Constants.IN_PROCESS;
-import static org.example.mongodb.service.Constants.LOG_DOES_NOT_EXISTS;
+import static org.example.mongodb.service.Constants.*;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.example.mongodb.exceptions.MCDPProjectException;
 import org.example.mongodb.executor.service.PlaneTravelArchiveService;
 import org.example.mongodb.executor.service.PlaneTravelHistoryService;
-import org.example.mongodb.model.Cargo;
-import org.example.mongodb.model.City;
-import org.example.mongodb.model.NeighborCities;
-import org.example.mongodb.model.Plane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +44,7 @@ import spark.Response;
 public class APIRoutesService {
 
 	private Gson gson = new Gson();
-	private Gson gsonNull = new GsonBuilder().serializeNulls().setPrettyPrinting().create();
+	private Gson gsonNull = new GsonBuilder().serializeNulls().create();
 	
 	private ValidationService validationService;
 	private DatabaseService databaseService;
@@ -66,7 +69,7 @@ public class APIRoutesService {
 	public String getPlanes(Request req, Response res)
 	{
 		logAPICall(req.uri());
-		List<Plane> planesList = databaseService.getAllPlanesDocument();
+		List<Document> planesList = databaseService.getAllPlanesDocument();
 	    return gson.toJson(planesList);
 	}
 	
@@ -74,7 +77,7 @@ public class APIRoutesService {
 	{
 		logAPICall(req.uri());
 		String planeId = req.params(COLON_ID);
-		Plane plane = databaseService.getPlaneDocumentById(planeId);
+		Document plane = databaseService.getPlaneDocumentById(planeId);
 		
 		if(plane == null)
 		{
@@ -83,7 +86,7 @@ public class APIRoutesService {
 			throw new MCDPProjectException("PlaneId " + planeId + LOG_DOES_NOT_EXISTS);
 		}
 		
-		return gson.toJson(plane);
+		return plane.toJson();
 	}
 	
 	public String updatePlaneById(Request req, Response res)
@@ -97,8 +100,8 @@ public class APIRoutesService {
 		List<Double> longLat = validationService.validateLocation(req, location);
 		int heading = validationService.validateHeading(req, headingStr);
 		
-		City city = null;
-		Plane plane = null;
+		Document city = null;
+		Document plane = null;
 		String planeLastLanded = null;
 		
 		if(landed != null)
@@ -120,7 +123,7 @@ public class APIRoutesService {
 			}
 			else
 			{
-				planeLastLanded = plane.getLanded();
+				planeLastLanded = plane.getString(FIELD_LANDED);
 			}
 		}
 		
@@ -144,7 +147,7 @@ public class APIRoutesService {
 		String cityStr = req.params(COLON_CITY);
 		String planeId = req.params(COLON_ID);
 		
-		City city = databaseService.getCityDocumentById(cityStr);
+		Document city = databaseService.getCityDocumentById(cityStr);
 		if(city == null)
 		{
 			logger.error("City value {}{}", cityStr, LOG_DOES_NOT_EXISTS);
@@ -155,25 +158,22 @@ public class APIRoutesService {
 		UpdateResult updateResult = databaseService.updatePlaneDocumentByIdRoute(planeId, cityStr, replaceRoute);
 		validationService.validateUpdateResult(planeId, updateResult, req, res);
 		
-		return gson.toJson(databaseService.getPlaneDocumentById(planeId));
+		return databaseService.getPlaneDocumentById(planeId).toJson();
 	}
 	
 	public String removeFirstPlaneRoute(Request req, Response res)
 	{
 		logAPICall(req.uri());
 		String planeId = req.params(COLON_ID);
-		//if(databaseService.validatePlaneFirstRouteAndLanded(planeId))
-		{
-			UpdateResult updateResult = databaseService.updatePlaneRemoveFirstRoute(planeId);
-			validationService.validateUpdateResult(planeId, updateResult, req, res);
-		}
+		UpdateResult updateResult = databaseService.updatePlaneRemoveFirstRoute(planeId);
+		validationService.validateUpdateResult(planeId, updateResult, req, res);
 		return gson.toJson(databaseService.getPlaneDocumentById(planeId));
 	}
 	
 	public String getCities(Request req, Response res)
 	{
 		logAPICall(req.uri());
-		List<City> citiesList = databaseService.getAllCitiesDocument();
+		List<Document> citiesList = databaseService.getAllCitiesDocument();
 	    return gson.toJson(citiesList);
 	}
 	
@@ -181,7 +181,7 @@ public class APIRoutesService {
 	{
 		logAPICall(req.uri());
 		String cityId = req.params(COLON_ID);
-		City city = databaseService.getCityDocumentById(cityId);
+		Document city = databaseService.getCityDocumentById(cityId);
 		
 		if(city == null)
 		{
@@ -190,7 +190,8 @@ public class APIRoutesService {
 			throw new MCDPProjectException("CityId " + cityId + LOG_DOES_NOT_EXISTS);
 		}
 		
-		return gson.toJson(city);
+		//return gson.toJson(city);
+		return city.toJson();
 	}
 	
 	public String getNearbyCitiesForId(Request req, Response res)
@@ -200,7 +201,7 @@ public class APIRoutesService {
 		String countStr = req.params(COLON_COUNT);
 		int count = validationService.validateCount(req, countStr);
 		
-		City city = databaseService.getCityDocumentById(cityId);
+		Document city = databaseService.getCityDocumentById(cityId);
 		if(city == null)
 		{
 			logger.error("CityId {}{}", cityId, LOG_DOES_NOT_EXISTS);
@@ -208,7 +209,7 @@ public class APIRoutesService {
 			throw new MCDPProjectException("CityId " + cityId + LOG_DOES_NOT_EXISTS);
 		}
 		
-		List<City> citiesList = databaseService.getNearbyCityDocumentsForId(city.getLocation(), count);
+		List<Document> citiesList = databaseService.getNearbyCityDocumentsForId(city.getList(FIELD_LOCATION, Double.class), count);
 		
 		NeighborCities neighborCities = new NeighborCities();
 		neighborCities.setNeighbors(citiesList);
@@ -227,7 +228,7 @@ public class APIRoutesService {
 		cityIds.add(destination);
 		cityIds.add(location);
 		
-		List<City> citiesList = databaseService.getAllCitiesDocumentByIds(cityIds);
+		List<Document> citiesList = databaseService.getAllCitiesDocumentByIds(cityIds);
 		if(citiesList.size() < 2)
 		{
 			logger.error("Location {} or destination {}{}", location, destination, LOG_DOES_NOT_EXISTS);
@@ -235,10 +236,17 @@ public class APIRoutesService {
 			throw new MCDPProjectException("Location " + location + " or destination " + destination + LOG_DOES_NOT_EXISTS);
 		}
 		
-		Cargo cargo = new Cargo();
-		cargo.setDestination(destination);
-		cargo.setLocation(location);
-		cargo.setStatus(IN_PROCESS);
+		Document cargo = new Document();
+		Date date = new Date();
+		ObjectId id = new ObjectId();
+		cargo.put(FIELD_UNDERSCORE_ID, id.toString());
+		cargo.put(FIELD_ID, id.toString());
+		cargo.put(FIELD_DESTINATION, destination);
+		cargo.put(FIELD_LOCATION, location);
+		cargo.put(FIELD_STATUS, IN_PROCESS);
+		cargo.put(FIELD_COURIER, null);
+		cargo.put(FIELD_RECEIVED, date.toString());
+		
 		cargo = databaseService.insertCargoDocument(cargo);
 		return gson.toJson(cargo);
 	}
@@ -247,7 +255,7 @@ public class APIRoutesService {
 	{
 		logAPICall(req.uri());
 		String location = req.params(COLON_LOCATION);
-		List<Cargo> cargosList = databaseService.getAllCargoDocumentAtLocationInProcess(location);
+		List<Document> cargosList = databaseService.getAllCargoDocumentAtLocationInProcess(location);
 		return gsonNull.toJson(cargosList);
 	}
 	
@@ -267,7 +275,7 @@ public class APIRoutesService {
 		String cargoId = req.params(COLON_ID);
 		String courier = req.params(COLON_COURIER);
 		
-		Plane plane = databaseService.getPlaneDocumentById(courier);
+		Document plane = databaseService.getPlaneDocumentById(courier);
 		
 		if(plane == null)
 		{
@@ -296,13 +304,6 @@ public class APIRoutesService {
 		String cargoId = req.params(COLON_ID);
 		String location = req.params(COLON_LOCATION);
 		
-//		City city = databaseService.getCityDocumentById(location);
-//		if(city == null)
-//		{
-//			req.attribute(ERROR_CODE, 404);
-//			throw new MCDPProjectException("Location " + location + " does not exists");
-//		}
-		
 		UpdateResult updateResult = databaseService.updateCargoDocument(cargoId, null, null, location);
 		validationService.validateUpdateResult(cargoId, updateResult, req, res);
 		return gson.toJson(databaseService.getCargoDocumentById(cargoId));
@@ -324,7 +325,7 @@ public class APIRoutesService {
 	{
 		logAPICall(req.uri());
 		String planeId = req.params(COLON_ID);
-		Plane plane = databaseService.getPlaneHistoryRecordsDocumentById(planeId);
+		Document plane = databaseService.getPlaneHistoryRecordsDocumentById(planeId);
 		
 		if(plane == null)
 		{
