@@ -14,12 +14,12 @@ use logistics
 
 matchByMinPopulation = { $match: {population:{$gt:1000}}}
 sortByPopulation = { $sort : { population: -1 }}
-groupByCountry = { $group: { _id: "$country", city : { $push : "$$ROOT" }}}
+groupByCountry = { $group: { _id: "$country", city : { $push : '$$ROOT' }}}
 projectForSlicing = { $project: {_id:1, "city": { "$slice": [ "$city", 15 ] }}}
 unwindCity = { $unwind: "$city"}
-addFieldsCityCharArray = { $addFields: { cityCharArray: {'$map': {input: { '$range': [ 0, { '$strLenCP': '$city.city_ascii' } ] },in: { '$substrCP': [ '$city.city_ascii', '$$this', 1 ] }}}}}
-addFieldsFilteredCityCharArray = { $addFields: { filteredCityCharArray: { '$filter': {input: '$cityCharArray', cond: { '$regexMatch': { input: '$$this', regex: '^[^/]+$' } }}}}}
-addFieldsFilteredCityString = { $addFields: { filteredCityString: {'$reduce': { input: '$filteredCityCharArray', initialValue: '', in: { '$concat': [ '$$value', '$$this' ] }}}}}
+addFieldsCityCharArray = { $addFields: { cityCharArray: {"$map": {input: { "$range": [ 0, { "$strLenCP": "$city.city_ascii" } ] },in: { "$substrCP": ["$city.city_ascii", "$$this", 1 ] }}}}}
+addFieldsFilteredCityCharArray = { $addFields: { filteredCityCharArray: { "$filter": {input: "$cityCharArray", cond: { "$regexMatch": { input: "$$this", regex: "^[^/]+$" } }}}}}
+addFieldsFilteredCityString = { $addFields: { filteredCityString: {"$reduce": { input: "$filteredCityCharArray", initialValue: "", in: { "$concat": [ "$$value", "$$this" ] }}}}}
 projectCity = { $project : { _id: {$concat : ["$filteredCityString", "-", "$city.country"]}, name: {$concat : ["$filteredCityString", "-", "$city.country"]}, location:["$city.lng","$city.lat"] , country: "$city.country" }}
 outCities = { $out : "cities" }
 db.worldcities.aggregate([matchByMinPopulation,sortByPopulation,groupByCountry,projectForSlicing,unwindCity,addFieldsCityCharArray,addFieldsFilteredCityCharArray,addFieldsFilteredCityString,projectCity,outCities])
