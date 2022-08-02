@@ -2,7 +2,7 @@
 
 Application is running on port 5001.
 
-# Load sample data - run following commands in sequence. Check for the description given for each command.
+* Load sample data - run following commands in sequence. Check for the description given for each command.
 
 mongoimport --uri mongodb://localhost:27017 --headerline -d logistics -c worldcities --type=csv worldcities.csv
 
