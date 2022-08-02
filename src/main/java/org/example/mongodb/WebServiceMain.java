@@ -13,12 +13,6 @@ import static spark.Spark.put;
 
 import java.util.logging.LogManager;
 
-import org.bson.codecs.configuration.CodecRegistries;
-import org.bson.codecs.configuration.CodecRegistry;
-import org.example.mongodb.codec.CargoCodec;
-import org.example.mongodb.codec.CityCodec;
-import org.example.mongodb.codec.PlaneCodec;
-import org.example.mongodb.codec.PlaneRecordCodec;
 import org.example.mongodb.exceptions.MCDPProjectException;
 import org.example.mongodb.service.APIRoutesService;
 import org.slf4j.Logger;
@@ -27,6 +21,8 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.ReadConcern;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 
@@ -47,7 +43,6 @@ public class WebServiceMain {
 		port(5001);
 		
 		String staticDir = System.getProperty("user.dir").concat("/static");
-		//staticDir = staticDir.substring(0,ordinalIndexOf(staticDir,"/",2)) + "/static";
 		externalStaticFileLocation(staticDir);
 		LogManager.getLogManager().reset();
 		
@@ -64,9 +59,10 @@ public class WebServiceMain {
         }
         
         ConnectionString connectionString = new ConnectionString(mongodbConnectionUri);
-        CodecRegistry pojoCodecRegistry = CodecRegistries.fromCodecs(new PlaneCodec(), new CityCodec(), new CargoCodec(), new PlaneRecordCodec());
-        CodecRegistry codecRegistry = CodecRegistries.fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),pojoCodecRegistry);
-        MongoClientSettings clientSettings = MongoClientSettings.builder().applyConnectionString(connectionString).codecRegistry(codecRegistry).build();
+        MongoClientSettings clientSettings = MongoClientSettings.builder()
+        		.applyConnectionString(connectionString)
+        		.writeConcern(WriteConcern.ACKNOWLEDGED)
+        		.readConcern(ReadConcern.MAJORITY).build();
         MongoClient mongoClient = MongoClients.create(clientSettings);
         
         APIRoutesService apiRoutesService = new APIRoutesService(mongoClient);

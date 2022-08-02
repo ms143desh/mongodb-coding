@@ -14,16 +14,20 @@ public class Constants {
 	public static final String COLL_PLANES_TRAVEL_ARCHIVES = "planes_travel_archives";
 	
 	public static final String FIELD_UNDERSCORE_ID = "_id";
+	public static final String FIELD_ID = "id";
+	public static final String FIELD_CALL_SIGN = "callsign";
+	public static final String FIELD_NAME = "name";
+	public static final String FIELD_COUNTRY = "country";
 	public static final String FIELD_CURRENT_LOCATION = "currentLocation";
 	public static final String FIELD_HEADING = "heading";
 	public static final String FIELD_LANDED = "landed";
 	public static final String FIELD_ROUTE = "route";
 	public static final String FIELD_LOCATION = "location";
-	public static final String FIELD_POSITION = "position";
 	public static final String FIELD_DESTINATION = "destination";
 	public static final String FIELD_STATUS = "status";
 	public static final String FIELD_RECEIVED = "received";
 	public static final String FIELD_COURIER = "courier";
+	public static final String FIELD_FIRST_ROUTE = "firstRoute";
 	
 	public static final String FIELD_LANDING_TIME = "landingTime";
 	public static final String FIELD_DISTANCE_TRAVELLED = "distanceTravelled";

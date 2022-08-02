@@ -5,9 +5,9 @@ import static org.example.mongodb.service.Constants.COLL_PLANES;
 import static org.example.mongodb.service.Constants.DB_LOGISTICS;
 import static org.example.mongodb.service.Constants.FIELD_DISTANCE_TRAVELLED;
 import static org.example.mongodb.service.Constants.FIELD_LANDING_TIME;
+import static org.example.mongodb.service.Constants.FIELD_LOCATION;
 import static org.example.mongodb.service.Constants.FIELD_MAINTENANCE_REQUIRE;
 import static org.example.mongodb.service.Constants.FIELD_PLANE_TRAVEL_HISTORY;
-import static org.example.mongodb.service.Constants.FIELD_POSITION;
 import static org.example.mongodb.service.Constants.FIELD_TOTAL_DISTANCE_TRAVEL;
 import static org.example.mongodb.service.Constants.FIELD_TOTAL_TRAVEL_TIME;
 import static org.example.mongodb.service.Constants.FIELD_TRAVEL_FROM;
@@ -61,9 +61,9 @@ public class PlaneTravelHistoryService {
 			if(mongoCursor.hasNext())
 			{
 				Document landedPositionDocument = mongoCursor.next();
-				List<Double> landedPositions = landedPositionDocument.getList(FIELD_POSITION, Double.class);
+				List<Double> landedPositions = landedPositionDocument.getList(FIELD_LOCATION, Double.class);
 				Document lastLandedPositionDocument = mongoCursor.next();
-				List<Double> lastLandedPositions = lastLandedPositionDocument.getList(FIELD_POSITION, Double.class);
+				List<Double> lastLandedPositions = lastLandedPositionDocument.getList(FIELD_LOCATION, Double.class);
 				
 				distanceTraveled = calculateLongLatDistance(lastLandedPositions.get(0), lastLandedPositions.get(1), landedPositions.get(0), landedPositions.get(1));
 				lastTravelTime = (long)(Math.round((distanceTraveled/planeAverageSpeed) * 100.0) / 100.0) * 60 * 60;
@@ -81,7 +81,7 @@ public class PlaneTravelHistoryService {
 	{
 		MongoCollection<Document> documentCityCollection = databaseService.getGenericCollection(DB_LOGISTICS, COLL_CITIES);
 		Bson filterCity = Filters.in(FIELD_UNDERSCORE_ID, Arrays.asList(landed,lastLanded));
-		Bson projectCity = Projections.fields(Projections.excludeId(),Projections.include(FIELD_POSITION));
+		Bson projectCity = Projections.fields(Projections.excludeId(),Projections.include(FIELD_LOCATION));
 		return documentCityCollection.find(filterCity).projection(projectCity).cursor();
 	}
 	
