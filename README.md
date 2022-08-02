@@ -14,7 +14,7 @@ use logistics
 
 matchByMinPopulation = { $match: {population:{$gt:1000}}}
 sortByPopulation = { $sort : { population: -1 }}
-groupByCountry = { $group: { _id: "$country", city : { $push : "$$ROOT" }}}
+groupByCountry = { $group: { _id: "$country", city : { $push : '$$ROOT' }}}
 projectForSlicing = { $project: {_id:1, "city": { "$slice": [ "$city", 15 ] }}}
 unwindCity = { $unwind: "$city"}
 addFieldsCityCharArray = { $addFields: { cityCharArray: {"$map": {input: { "$range": [ 0, { "$strLenCP": "$city.city_ascii" } ] },in: { "$substrCP": ["$city.city_ascii", "$$this", 1 ] }}}}}
