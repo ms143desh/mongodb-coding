@@ -1,3 +1,10 @@
+# Tested
+
+1. Successfully tested with multiple scenarios
+   - 2102 cities and 200 planes
+   - 5000 cities and 400 planes
+   - 141 cities and 20 planes
+
 # Scripts and queries for collection
 
 Application is running on port 5001.
