@@ -1,7 +1,7 @@
 # Project details
-This code implementation is written in Java programming language.
-This is the project for the MCDP certification and is based on the tasks (assignment) given for it.
-Below are the installation instructions, tested use cases, scripts.
+1. This code implementation is written in Java programming language.
+2. This is the project for the MCDP certification and is based on the tasks (assignment) given for it.
+3. Below are the installation instructions, tested use cases, scripts.
 
 # Installation instructions
 1. Clone the repository by running the `git clone` command.
