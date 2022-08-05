@@ -17,16 +17,16 @@
 
 # Tested
 
-1. Successfully tested with multiple scenarios
+1. This application is successfully tested with multiple scenarios
    - 2102 cities and 200 planes
    - 5000 cities and 400 planes
    - 141 cities and 20 planes
 
 # Load initial data
 1. Initially load all the cities given with worldcities.csv.
+
 ```
 mongoimport --uri mongodb://localhost:27017 --headerline -d logistics -c worldcities --type=csv worldcities.csv
-
 mongo --host localhost --port 27017
 show dbs
 use logistics
