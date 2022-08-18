@@ -56,9 +56,9 @@ db.cargos.createIndex( { "location" : 1, "status":1 } )
 To run application on top 15 cities of countries with population greater than 1000.
 
 ## Script for city collection
-This script does the concatenation of city & country name and removal of '/' charater from the cities names.
-Concatenation of city and country name is required, because there are multiple cities with same name and have a unique index on city.
-Removal of '/' is required, because '/' character creates problem with API URI.
+- This script does the concatenation of city & country name and removal of '/' charater from the cities names.
+- Concatenation of city and country name is required, because there are multiple cities with same name and have a unique index on city.
+- Removal of '/' is required, because '/' character creates problem with API URI.
 
 ```
 matchByMinPopulation = { $match: {population:{$gt:1000}}}
