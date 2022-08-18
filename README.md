@@ -13,7 +13,7 @@
 2. `mvn package`
 3. `java -jar <JAR_NAME> <MONGODB_CONNECTION_STRING>`
 4. By default application runs on MongoDB `localhost:27017`
-5. Application runs on port `localhost:5001`. Change the port in applicatio as per requirement.
+5. Application runs on port `localhost:5001`. Change the port in application as per requirement.
 
 # Tested
 
@@ -56,7 +56,9 @@ db.cargos.createIndex( { "location" : 1, "status":1 } )
 To run application on top 15 cities of countries with population greater than 1000.
 
 ## Script for city collection
-This script does the removal of '/' charater from the cities names. This is because '/' character creates problem with API URI.
+This script does the concatenation of city & country name and removal of '/' charater from the cities names.
+Concatenation of city and country name is required, because there are multiple cities with same name and have a unique index on city.
+Removal of '/' is required, because '/' character creates problem with API URI.
 
 ```
 matchByMinPopulation = { $match: {population:{$gt:1000}}}
